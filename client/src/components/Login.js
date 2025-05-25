@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
@@ -8,18 +8,26 @@ import {
   Button,
   Typography,
   Paper,
+  Alert,
 } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 
 function Login() {
   const navigate = useNavigate();
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError('');
     try {
       await signInWithPopup(auth, googleProvider);
       navigate('/');
     } catch (error) {
       console.error('Error signing in with Google:', error);
+      setError(error.message || 'Failed to sign in with Google. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,14 +54,22 @@ function Login() {
           <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
             Service Desk Login
           </Typography>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2, width: '100%' }}>
+              {error}
+            </Alert>
+          )}
+
           <Button
             variant="contained"
             startIcon={<GoogleIcon />}
             onClick={handleGoogleLogin}
             fullWidth
+            disabled={loading}
             sx={{ mt: 2 }}
           >
-            Sign in with Google
+            {loading ? 'Signing in...' : 'Sign in with Google'}
           </Button>
         </Paper>
       </Box>
