@@ -14,12 +14,15 @@ import {
   TableHead,
   TableRow,
   Paper,
+  alpha,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
 function UserListTable() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const theme = useTheme();
 
   useEffect(() => {
     const usersCollectionRef = collection(db, 'users');
@@ -65,23 +68,25 @@ function UserListTable() {
       <Typography variant="h5" gutterBottom>
         All Users
       </Typography>
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ boxShadow: 3, borderRadius: 2 }}>
         <Table sx={{ minWidth: 650 }} aria-label="user list table">
           <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Department</TableCell>
-              <TableCell>Location</TableCell>
-              {/* Add more headers if needed */}
+            <TableRow sx={{ backgroundColor: alpha(theme.palette.primary.light, 0.1) }}>
+              <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Role</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Department</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Location</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {users.map((user) => (
               <TableRow
                 key={user.id}
-                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                sx={{
+                   '&:last-child td, &:last-child th': { border: 0 },
+                   '&:hover': { backgroundColor: theme.palette.action.hover },
+                }}
               >
                 <TableCell component="th" scope="row">
                   {user.name || 'N/A'}
@@ -90,7 +95,6 @@ function UserListTable() {
                 <TableCell>{user.role || 'user'}</TableCell>
                 <TableCell>{user.department || 'N/A'}</TableCell>
                  <TableCell>{user.location || 'N/A'}</TableCell>
-                {/* Add more cells if needed */}
               </TableRow>
             ))}
           </TableBody>

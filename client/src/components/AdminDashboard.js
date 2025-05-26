@@ -28,24 +28,39 @@ const StatCard = ({ title, value, icon, color }) => (
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5 }}
   >
-    <Card sx={{ height: '100%' }}>
+    <Card
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+        '&:hover': {
+          transform: 'translateY(-5px)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+        },
+      }}
+    >
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <Box
             sx={{
               backgroundColor: `${color}15`,
               borderRadius: '50%',
-              p: 1,
+              p: 1.5,
               mr: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            {icon}
+            {React.cloneElement(icon, { sx: { ...icon.props.sx, fontSize: 40 } })}
           </Box>
-          <Typography variant="h6" component="div">
+          <Typography variant="h6" component="div" color="text.secondary">
             {title}
           </Typography>
         </Box>
-        <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
+        <Typography variant="h3" component="div" sx={{ fontWeight: 'bold', textAlign: 'right' }}>
           {value}
         </Typography>
       </CardContent>
@@ -116,9 +131,10 @@ function AdminDashboard() {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%)',
+        background: 'linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%)',
         pt: 4,
         pb: 8,
+        px: 2,
       }}
     >
       <Container maxWidth="lg">
@@ -132,16 +148,15 @@ function AdminDashboard() {
             sx={{
               fontWeight: 700,
               mb: 4,
-              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              textAlign: 'center',
+              color: theme.palette.primary.dark,
             }}
           >
-            Admin Dashboard
+            Admin Dashboard Overview
           </Typography>
         </motion.div>
 
-        <Grid container spacing={3}>
+        <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={6} md={3}>
             <div onClick={() => handleCardClick('users')} style={{ cursor: 'pointer' }}>
               <StatCard

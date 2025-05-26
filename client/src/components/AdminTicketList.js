@@ -18,13 +18,16 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  alpha,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
 function AdminTicketList({ statusFilter = null }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const statuses = ['pending', 'resolved', 'closed']; // Define possible statuses
+  const statuses = ['pending', 'resolved', 'closed'];
+  const theme = useTheme();
 
   useEffect(() => {
     setLoading(true);
@@ -59,7 +62,7 @@ function AdminTicketList({ statusFilter = null }) {
       const ticketRef = doc(db, 'tickets', ticketId);
       await updateDoc(ticketRef, {
         status: newStatus,
-        updatedAt: new Date(), // Update updatedAt field
+        updatedAt: new Date(),
       });
       console.log(`Ticket ${ticketId} status updated to ${newStatus}`);
     } catch (error) {
@@ -89,24 +92,26 @@ function AdminTicketList({ statusFilter = null }) {
       <Typography variant="h5" gutterBottom>
         {statusFilter ? `${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)} Tickets` : 'All Tickets'}
       </Typography>
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ boxShadow: 3, borderRadius: 2 }}>
         <Table sx={{ minWidth: 650 }} aria-label="admin tickets table">
           <TableHead>
-            <TableRow>
-              <TableCell>Title</TableCell>
-              <TableCell>Category</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Priority</TableCell>
-              <TableCell>Created By (Email)</TableCell>
-              <TableCell>Created At</TableCell>
-              {/* Add more headers if needed */}
+            <TableRow sx={{ backgroundColor: alpha(theme.palette.primary.light, 0.1) }}>
+              <TableCell sx={{ fontWeight: 'bold' }}>Title</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Priority</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Created By (Email)</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Created At</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {tickets.map((ticket) => (
               <TableRow
                 key={ticket.id}
-                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                sx={{
+                  '&:last-child td, &:last-child th': { border: 0 },
+                  '&:hover': { backgroundColor: theme.palette.action.hover },
+                }}
               >
                 <TableCell component="th" scope="row">
                   {ticket.title}
@@ -117,10 +122,11 @@ function AdminTicketList({ statusFilter = null }) {
                     <Select
                       value={ticket.status}
                       onChange={(e) => handleStatusChange(ticket.id, e.target.value)}
-                      label="Status"
+                      disableUnderline
+                      sx={{ fontSize: '0.875rem' }}
                     >
                       {statuses.map((status) => (
-                        <MenuItem key={status} value={status}>
+                        <MenuItem key={status} value={status} sx={{ fontSize: '0.875rem' }}>
                           {status.charAt(0).toUpperCase() + status.slice(1)}
                         </MenuItem>
                       ))}
@@ -130,7 +136,6 @@ function AdminTicketList({ statusFilter = null }) {
                 <TableCell>{ticket.priority}</TableCell>
                 <TableCell>{ticket.userEmail}</TableCell>
                 <TableCell>{ticket.createdAt ? new Date(ticket.createdAt.toDate()).toLocaleString() : 'N/A'}</TableCell>
-                {/* Add more cells if needed */}
               </TableRow>
             ))}
           </TableBody>
