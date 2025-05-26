@@ -14,6 +14,8 @@ import TicketList from './components/TicketList';
 import TicketDetails from './components/TicketDetails';
 import Profile from './components/Profile';
 import MyTickets from './components/MyTickets';
+import AdminDashboard from './components/AdminDashboard';
+import AdminRoute from './components/AdminRoute';
 
 // Private Route Component
 const PrivateRoute = ({ children }) => {
@@ -145,6 +147,14 @@ function App() {
                   <PrivateRoute>
                     <Profile />
                   </PrivateRoute>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
                 }
               />
             </Routes>

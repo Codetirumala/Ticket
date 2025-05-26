@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../firebase';
 import {
@@ -28,8 +28,10 @@ import {
   List as ListIcon,
   Person as PersonIcon,
   Logout as LogoutIcon,
+  AdminPanelSettings as AdminPanelSettingsIcon,
 } from '@mui/icons-material';
 import Logo from './Logo';
+import { isAdmin } from '../utils/adminUtils';
 
 function Navbar() {
   const [user] = useAuthState(auth);
@@ -40,6 +42,7 @@ function Navbar() {
   
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [isUserAdmin, setIsUserAdmin] = useState(false);
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
@@ -72,6 +75,16 @@ function Navbar() {
   const isActive = (path) => {
     return location.pathname === path;
   };
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (user) {
+        const adminStatus = await isAdmin(user.uid);
+        setIsUserAdmin(adminStatus);
+      }
+    };
+    checkAdminStatus();
+  }, [user]);
 
   const drawer = (
     <Box sx={{ width: 250 }} role="presentation">
@@ -124,6 +137,25 @@ function Navbar() {
             <ListItemText primary={item.text} />
           </ListItem>
         ))}
+        {isUserAdmin && (
+          <ListItem
+            button
+            component={Link}
+            to="/admin"
+            onClick={() => setMobileOpen(false)}
+            sx={{
+              color: 'text.primary',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              },
+            }}
+          >
+            <ListItemIcon>
+              <AdminPanelSettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Admin Dashboard" />
+          </ListItem>
+        )}
       </List>
       <Divider />
       <List>
@@ -183,7 +215,22 @@ function Navbar() {
                 {item.text}
               </Button>
             ))}
-             <IconButton
+            {isUserAdmin && (
+              <Button
+                color="inherit"
+                startIcon={<AdminPanelSettingsIcon />}
+                onClick={() => navigate('/admin')}
+                sx={{
+                  backgroundColor: isActive('/admin') ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  },
+                }}
+              >
+                Admin Dashboard
+              </Button>
+            )}
+            <IconButton
               onClick={handleProfileMenuOpen}
               size="small"
               sx={{ ml: 2 }}
