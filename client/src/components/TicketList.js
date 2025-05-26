@@ -29,7 +29,7 @@ function TicketList() {
   useEffect(() => {
     const q = query(
       collection(db, 'tickets'),
-      where('createdBy', '==', user.uid),
+      where('userId', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
 

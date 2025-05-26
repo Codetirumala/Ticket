@@ -1,39 +1,74 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { db, auth } from '../firebase';
+import { auth, db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import {
   Container,
   Paper,
   Typography,
   TextField,
   Button,
+  Box,
   FormControl,
   InputLabel,
   Select,
-  Box,
+  MenuItem,
+  Grid,
   Alert,
+  Snackbar,
+  useTheme,
+  Chip,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import MenuItem from '@mui/material/MenuItem';
+import {
+  Send as SendIcon,
+  Description as DescriptionIcon,
+  Category as CategoryIcon,
+  PriorityHigh as PriorityIcon,
+  Help as HelpIcon,
+  ArrowBack as ArrowBackIcon,
+} from '@mui/icons-material';
+import { motion } from 'framer-motion';
+
+const MotionPaper = motion(Paper);
+
+const priorityColors = {
+  low: '#4CAF50',
+  medium: '#FFA726',
+  high: '#F44336',
+  urgent: '#D32F2F',
+};
+
+const categories = [
+  'Technical Support',
+  'Hardware Issue',
+  'Software Issue',
+  'Network Problem',
+  'Account Access',
+  'General Inquiry',
+];
 
 function CreateTicket() {
-  const navigate = useNavigate();
   const [user] = useAuthState(auth);
-  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const theme = useTheme();
   const [loading, setLoading] = useState(false);
-  const [ticketData, setTicketData] = useState({
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [formData, setFormData] = useState({
     title: '',
     description: '',
+    category: '',
     priority: 'medium',
-    category: 'technical',
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setTicketData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
   };
 
@@ -43,108 +78,253 @@ function CreateTicket() {
     setError('');
 
     try {
-      const ticketRef = await addDoc(collection(db, 'tickets'), {
-        ...ticketData,
-        status: 'open',
-        createdAt: new Date(),
-        createdBy: user.uid,
-        createdByEmail: user.email,
-        updates: [],
-      });
+      const ticketData = {
+        ...formData,
+        userId: user.uid,
+        userEmail: user.email,
+        userName: user.displayName,
+        status: 'pending',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
 
-      navigate(`/ticket/${ticketRef.id}`);
-    } catch (error) {
-      setError('Error creating ticket. Please try again.');
-      console.error('Error creating ticket:', error);
+      await addDoc(collection(db, 'tickets'), ticketData);
+      setSuccess(true);
+      setFormData({
+        title: '',
+        description: '',
+        category: '',
+        priority: 'medium',
+      });
+      setTimeout(() => {
+        navigate('/my-tickets');
+      }, 2000);
+    } catch (err) {
+      setError('Failed to create ticket. Please try again.');
+      console.error('Error creating ticket:', err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Create New Ticket
-        </Typography>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%)',
+        pt: 4,
+        pb: 8,
+      }}
+    >
+      <Container maxWidth="md">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+            <IconButton
+              onClick={() => navigate(-1)}
+              sx={{
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.9)' },
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 700,
+                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Create New Ticket
+            </Typography>
+          </Box>
+        </motion.div>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+        <MotionPaper
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          elevation={3}
+          sx={{
+            p: 4,
+            borderRadius: 2,
+            background: 'rgba(255, 255, 255, 0.9)',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <form onSubmit={handleSubmit}>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Ticket Title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  required
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: (
+                      <DescriptionIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                    ),
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  required
+                  multiline
+                  rows={4}
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: (
+                      <DescriptionIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                    ),
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel>Category</InputLabel>
+                  <Select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    label="Category"
+                    startAdornment={
+                      <CategoryIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                    }
+                  >
+                    {categories.map((category) => (
+                      <MenuItem key={category} value={category}>
+                        {category}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel>Priority</InputLabel>
+                  <Select
+                    name="priority"
+                    value={formData.priority}
+                    onChange={handleChange}
+                    label="Priority"
+                    startAdornment={
+                      <PriorityIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                    }
+                  >
+                    <MenuItem value="low">
+                      <Chip
+                        label="Low"
+                        size="small"
+                        sx={{
+                          backgroundColor: priorityColors.low,
+                          color: 'white',
+                        }}
+                      />
+                    </MenuItem>
+                    <MenuItem value="medium">
+                      <Chip
+                        label="Medium"
+                        size="small"
+                        sx={{
+                          backgroundColor: priorityColors.medium,
+                          color: 'white',
+                        }}
+                      />
+                    </MenuItem>
+                    <MenuItem value="high">
+                      <Chip
+                        label="High"
+                        size="small"
+                        sx={{
+                          backgroundColor: priorityColors.high,
+                          color: 'white',
+                        }}
+                      />
+                    </MenuItem>
+                    <MenuItem value="urgent">
+                      <Chip
+                        label="Urgent"
+                        size="small"
+                        sx={{
+                          backgroundColor: priorityColors.urgent,
+                          color: 'white',
+                        }}
+                      />
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => navigate(-1)}
+                    sx={{ minWidth: 120 }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={loading}
+                    startIcon={<SendIcon />}
+                    sx={{
+                      minWidth: 120,
+                      background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                      '&:hover': {
+                        background: 'linear-gradient(45deg, #1976D2 30%, #1E88E5 90%)',
+                      },
+                    }}
+                  >
+                    {loading ? 'Creating...' : 'Create Ticket'}
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
+          </form>
+        </MotionPaper>
+
+        <Snackbar
+          open={success}
+          autoHideDuration={2000}
+          onClose={() => setSuccess(false)}
+        >
+          <Alert severity="success" sx={{ width: '100%' }}>
+            Ticket created successfully!
+          </Alert>
+        </Snackbar>
+
+        <Snackbar
+          open={!!error}
+          autoHideDuration={6000}
+          onClose={() => setError('')}
+        >
+          <Alert severity="error" sx={{ width: '100%' }}>
             {error}
           </Alert>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label="Title"
-            name="title"
-            value={ticketData.title}
-            onChange={handleChange}
-            required
-            margin="normal"
-          />
-
-          <TextField
-            fullWidth
-            label="Description"
-            name="description"
-            value={ticketData.description}
-            onChange={handleChange}
-            required
-            multiline
-            rows={4}
-            margin="normal"
-          />
-
-          <Box sx={{ mt: 2, mb: 2 }}>
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Priority</InputLabel>
-              <Select
-                name="priority"
-                value={ticketData.priority}
-                onChange={handleChange}
-                label="Priority"
-              >
-                <MenuItem value="low">Low</MenuItem>
-                <MenuItem value="medium">Medium</MenuItem>
-                <MenuItem value="high">High</MenuItem>
-                <MenuItem value="urgent">Urgent</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          <Box sx={{ mt: 2, mb: 2 }}>
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Category</InputLabel>
-              <Select
-                name="category"
-                value={ticketData.category}
-                onChange={handleChange}
-                label="Category"
-              >
-                <MenuItem value="technical">Technical</MenuItem>
-                <MenuItem value="billing">Billing</MenuItem>
-                <MenuItem value="general">General</MenuItem>
-                <MenuItem value="feature">Feature Request</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            disabled={loading}
-            sx={{ mt: 2 }}
-          >
-            {loading ? 'Creating...' : 'Create Ticket'}
-          </Button>
-        </form>
-      </Paper>
-    </Container>
+        </Snackbar>
+      </Container>
+    </Box>
   );
 }
 
-export default CreateTicket; 
+export default CreateTicket;
