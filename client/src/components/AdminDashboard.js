@@ -17,6 +17,7 @@ import {
   Assignment as TicketIcon,
   CheckCircle as ResolvedIcon,
   Pending as PendingIcon,
+  Cancel as RejectedIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import AdminTicketList from './AdminTicketList';
@@ -76,6 +77,7 @@ function AdminDashboard() {
     totalTickets: 0,
     resolvedTickets: 0,
     pendingTickets: 0,
+    rejectedTickets: 0,
   });
   const [selectedCategory, setSelectedCategory] = useState(null);
 
@@ -95,24 +97,28 @@ function AdminDashboard() {
         console.log('Total tickets fetched:', totalTickets);
         let resolvedTickets = 0;
         let pendingTickets = 0;
+        let rejectedTickets = 0;
 
         ticketsSnapshot.forEach((doc) => {
           const ticket = doc.data();
           console.log('Ticket status:', ticket.status);
           if (ticket.status === 'resolved') resolvedTickets++;
           if (ticket.status === 'pending') pendingTickets++;
+          if (ticket.status === 'rejected') rejectedTickets++;
         });
 
         console.log('Resolved tickets:', resolvedTickets);
         console.log('Pending tickets:', pendingTickets);
+        console.log('Rejected tickets:', rejectedTickets);
 
         setStats({
           totalUsers,
           totalTickets,
           resolvedTickets,
           pendingTickets,
+          rejectedTickets,
         });
-        console.log('Stats updated:', { totalUsers, totalTickets, resolvedTickets, pendingTickets });
+        console.log('Stats updated:', { totalUsers, totalTickets, resolvedTickets, pendingTickets, rejectedTickets });
       } catch (error) {
         console.error('Error fetching admin stats:', error);
       }
@@ -197,6 +203,16 @@ function AdminDashboard() {
               />
             </div>
           </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <div onClick={() => handleCardClick('rejectedTickets')} style={{ cursor: 'pointer' }}>
+              <StatCard
+                title="Rejected Tickets"
+                value={stats.rejectedTickets}
+                icon={<RejectedIcon sx={{ color: theme.palette.error.main }} />}
+                color={theme.palette.error.main}
+              />
+            </div>
+          </Grid>
         </Grid>
 
         {/* Conditional rendering of tables based on selected category */}
@@ -204,7 +220,7 @@ function AdminDashboard() {
         {selectedCategory === 'allTickets' && <AdminTicketList />}
         {selectedCategory === 'resolvedTickets' && <AdminTicketList statusFilter="resolved" />}
         {selectedCategory === 'pendingTickets' && <AdminTicketList statusFilter="pending" />}
-
+        {selectedCategory === 'rejectedTickets' && <AdminTicketList statusFilter="rejected" />}
       </Container>
     </Box>
   );
