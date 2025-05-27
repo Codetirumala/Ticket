@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow authenticated users to read their own user document
+    match /users/{userId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+    }
+
+    // Allow authenticated users to create tickets
+    // Allow users to read tickets they created or are assigned to (you might need to adjust this based on your schema)
+    // Allow admins to read, update, and delete all tickets
+    match /tickets/{ticketId} {
+      allow create: if request.auth != null;
+      // Add rules for read, update, delete based on your requirements (e.g., user owns ticket, user is admin)
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow update: if request.auth != null && (resource.data.userId == request.auth.uid || exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow delete: if request.auth != null && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Allow authenticated users to read and create comments on tickets they can read
+    match /tickets/{ticketId}/comments/{commentId} {
+       allow read: if request.auth != null && exists(/databases/$(database)/documents/tickets/$(ticketId)) && (get(/databases/$(database)/documents/tickets/$(ticketId)).data.userId == request.auth.uid || exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+       allow create: if request.auth != null && exists(/databases/$(database)/documents/tickets/$(ticketId)) && (get(/databases/$(database)/documents/tickets/$(ticketId)).data.userId == request.auth.uid || exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+     // Allow admins to read all user documents
+    match /users/{userId} {
+      allow read: if request.auth != null && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // Existing rules for read, update, delete for the user themselves
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+       allow create: if request.auth != null;
+    }
+  }
+} 
